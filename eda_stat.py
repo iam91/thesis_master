@@ -68,8 +68,8 @@ if __name__ == '__main__':
     # t = data_req[['url_len', 'url_path_len', 'url_query_cnt', 'url_path_str', 'url_query_str', 'ratio']]
 
     ##### plot #####
-    FEATURE_CONTINUOUS = False 
-    FEATURE_DISCRETE = True
+    FEATURE_CONTINUOUS = True 
+    FEATURE_DISCRETE = False
 
     col = 'site host_is_ip url_len url_path_len url_path_str url_query_cnt url_query_str ratio target'.split()
     df = data_req[col]
