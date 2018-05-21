@@ -11,14 +11,23 @@ class CV(object):
         self.datax = datax
         self.datay = datay 
         self.folds = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-        self.scores = {
-            'precision': np.zeros(n_splits),
-            'accuracy': np.zeros(n_splits),
-            'recall': np.zeros(n_splits),
-            'f1': np.zeros(n_splits)
-        }
+        self.n_splits = n_splits
 
     def validate(self, clf):
+
+        valid_scores = {
+            'precision': np.zeros(self.n_splits),
+            'accuracy': np.zeros(self.n_splits),
+            'recall': np.zeros(self.n_splits),
+            'f1': np.zeros(self.n_splits)
+        }
+
+        train_scores = {
+            'precision': np.zeros(self.n_splits),
+            'accuracy': np.zeros(self.n_splits),
+            'recall': np.zeros(self.n_splits),
+            'f1': np.zeros(self.n_splits)
+        }
 
         for i, (train_idx, valid_idx) in enumerate(self.folds.split(self.datax, self.datay)):
             print 'iter {:d}'.format(i)
@@ -27,11 +36,17 @@ class CV(object):
             trainy, validy = self.datay.values[train_idx], self.datay.values[valid_idx]
 
             clf.fit(trainx, trainy)
-            predy = clf.predict(validx)
+            pred_valid = clf.predict(validx)
+            pred_train = clf.predict(trainx)
 
-            self.scores['precision'][i] = precision_score(validy, predy)
-            self.scores['accuracy'][i] = accuracy_score(validy, predy)
-            self.scores['recall'][i] = recall_score(validy, predy)
-            self.scores['f1'][i] = f1_score(validy, predy)
+            valid_scores['precision'][i] = precision_score(validy, pred_valid)
+            valid_scores['accuracy'][i] = accuracy_score(validy, pred_valid)
+            valid_scores['recall'][i] = recall_score(validy, pred_valid)
+            valid_scores['f1'][i] = f1_score(validy, pred_valid)
+
+            train_scores['precision'][i] = precision_score(trainy, pred_train)
+            train_scores['accuracy'][i] = accuracy_score(trainy, pred_train)
+            train_scores['recall'][i] = recall_score(trainy, pred_train)
+            train_scores['f1'][i] = f1_score(trainy, pred_train)
             
-        print self.scores
+        return valid_scores, train_scores
