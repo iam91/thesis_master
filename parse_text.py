@@ -1,26 +1,58 @@
+import re
 import urlparse
+from urllib import unquote
 import pandas as pd 
 
 
-def parse_param(url):
+def split_param(url):
     parsed = urlparse.urlparse(url)
     params = [x[0] for x in urlparse.parse_qsl(parsed.query)]
     return params
 
 
-def parse_path(url):
+def split_path(url):
     parsed = urlparse.urlparse(url)
     paths = parsed.path.split('/')[1:]
     return paths
 
 
+def split_host(host):
+    return host.split('.')
+
+
+def extract_field(field_str, field):
+        if isinstance(field_str, str) and len(field_str) > 0:
+            fields = dict(urlparse.parse_qsl(unquote(field_str)))
+            if field in fields:
+                return fields[field]
+            else:
+                return ''
+        else:
+            return ''
+
+
+def split(data):
+    words = []
+    method = data['method']
+    param = split_param(data['url'])
+    path = split_path(data['url'])
+    host = split_host(extract_field(data['fields'], 'host'))
+
+    words.append(method)
+    words.extend(param)
+    words.extend(path)
+    words.extend(host)
+
+    return ' '.join(words).strip()
+
+
+
 if __name__ == '__main__':
-    url = '/api/v1/products/a2869674571f77b5a0867c3d71db5856/threads/6HV8FJ6P008535RB/comments/hotList?offset=0&limit=3&showLevelThreshold=70&headLimit=1&tailLimit=2&ibc=jssdk&callback=tool10007192277292035487_1500172834387&_=1500172834388'
-    print parse_param(url)
-    print '-' * 20
-    print parse_path(url)
-    # df = pd.read_csv('data_req.txt', sep='\\')
-
-    # text_df = df.apply(parse, axis=1)
-
-    # text_df.to_csv('data_text.txt')
+    df = pd.read_csv('data_req.txt', sep='\\')
+    print 'read'
+    
+    df['text'] = df.apply(split, axis=1)
+    df = df[['target', 'text']]
+    
+    print df.head()
+    df.to_csv('data_text.csv', index=False, header=True)
