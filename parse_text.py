@@ -4,6 +4,12 @@ from urllib import unquote
 import pandas as pd 
 
 
+reg_IPv4 = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+reg_IPv6 = r'^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$'
+reg_extract_ipv4 = r'(.*):\d+'
+reg_extract_ipv6 = r'\[(.*)\]:\d+'
+
+
 def split_param(url):
     parsed = urlparse.urlparse(url)
     params = [x[0] for x in urlparse.parse_qsl(parsed.query)]
@@ -13,11 +19,25 @@ def split_param(url):
 def split_path(url):
     parsed = urlparse.urlparse(url)
     paths = parsed.path.split('/')[1:]
+    if(paths[-1].find('.') > -1):
+        tail = paths[-1].split('.')
+        paths[-1] = tail[0]
+        paths.append(tail[1])
     return paths
 
 
 def split_host(host):
-    return host.split('.')
+    if(host.startswith('[')):
+        r = re.search(reg_extract_ipv6, host)
+        host = r.group(1)
+    elif(host.find(':') > -1):
+        r = re.search(reg_extract_ipv4, host)
+        host = r.group(1)
+    if re.match(reg_IPv6, host):
+        seg = host.split(':')
+        return map(lambda x: '0' if len(x) == 0 else x, seg)
+    else:
+        return host.split('.')
 
 
 def extract_field(field_str, field):
@@ -36,12 +56,12 @@ def split(data):
     method = data['method']
     param = split_param(data['url'])
     path = split_path(data['url'])
-    host = split_host(extract_field(data['fields'], 'host'))
+    host = [] # split_host(extract_field(data['fields'], 'host'))
 
     words.append(method)
-    words.extend(param)
-    words.extend(path)
     words.extend(host)
+    words.extend(path)
+    words.extend(param)
 
     return ' '.join(words).strip()
 
