@@ -24,6 +24,17 @@ def wordfreq(texts):
         reverse=True)
 
 
+def lenfreq(lens):
+        len_cnt = {}
+        for len in lens:
+            if len in len_cnt:
+                len_cnt[len] += 1
+            else:
+                len_cnt[len] = 1
+        len_cnt = sorted(len_cnt.items(), key=lambda x: x[0])
+        return len_cnt
+
+
 def tfidf(texts, param):
     tv = TfidfVectorizer(**param)
     tf = tv.fit_transform(texts)
@@ -31,18 +42,19 @@ def tfidf(texts, param):
     idx = tv.vocabulary_.items()
     tf = np.asarray(tf.sum(axis=0)).reshape(-1)
     tf = [(x[0], tf[x[1]]) for x in idx]
-    tf = sorted(tf, key=lambda x: x[1], reverse=True)[0:10]
+    tf = sorted(tf, key=lambda x: x[1], reverse=True)[0:15]
     
     tf = pd.DataFrame(tf)
-    tf.rename(columns={0: 'word', 1: 'term-frequency'}, inplace=True)
-    sns.barplot(data=tf, x='word', y='term-frequency', color='#666666')
+    tf.rename(columns={0: 'word', 1: 'word-ratio'}, inplace=True)
+    tf['word-ratio'] = tf['word-ratio'] / tf['word-ratio'].sum()
+    sns.barplot(data=tf, x='word', y='word-ratio', color='#666666')
     plt.show()
 
 
 if __name__ == '__main__':
 
-    SIMPLE_CNT = True  
-    TF_IDF = False
+    SIMPLE_CNT = False 
+    TF_IDF = True
 
     df = pd.read_csv('../data_text.csv')
     print 'read'
@@ -63,18 +75,10 @@ if __name__ == '__main__':
         print '-' * 20
         print freq_neg[0:10]
         print '-' * 20
-
+        
         lens = [len(x[0]) for x in freq_pos]
         lens.extend([len(x[0]) for x in freq_neg])
-        len_cnt = {}
-        for len in lens:
-            if len in len_cnt:
-                len_cnt[len] += 1
-            else:
-                len_cnt[len] = 1
-        len_cnt = sorted(len_cnt.items(), key=lambda x: x[0])
-        # print [x[1] for x in len_cnt]
-        print len_cnt
+        len_cnt = lenfreq(lens)
 
     if TF_IDF:
         # tf
@@ -84,4 +88,4 @@ if __name__ == '__main__':
             'norm': None
         }
         
-        tfidf(text_pos, param)
+        tfidf(text_neg, param)

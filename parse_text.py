@@ -74,8 +74,9 @@ def split(data):
         else:
             words.append(w)
 
-    words = ['digits' if re.match(reg_digits, w) else w.strip('\"') for w in words]
-    words = ['codes' if re.search(reg_codes, w) else w.strip('\"') for w in words]
+    words = ['' if re.match(reg_digits, w) else w.strip('\"') for w in words]
+    words = ['' if re.search(reg_codes, w) else w.strip('\"') for w in words]
+    
     words = filter(lambda x: x != '', words)
     words = filter(lambda x: len(x) <= 20, words)
 
