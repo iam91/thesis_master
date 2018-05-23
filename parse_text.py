@@ -8,6 +8,8 @@ reg_IPv4 = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4]
 reg_IPv6 = r'^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$'
 reg_extract_ipv4 = r'(.*):\d+'
 reg_extract_ipv6 = r'\[(.*)\]:\d+'
+reg_digits = r'^\d+$'
+reg_codes = r'\d{2,}'
 
 
 def split_param(url):
@@ -52,16 +54,30 @@ def extract_field(field_str, field):
 
 
 def split(data):
-    words = []
+    coarse_words = []
     method = data['method']
     param = split_param(data['url'])
     path = split_path(data['url'])
     host = [] # split_host(extract_field(data['fields'], 'host'))
 
-    words.append(method)
-    words.extend(host)
-    words.extend(path)
-    words.extend(param)
+    coarse_words.append(method)
+    # coarse_words.extend(host)
+    coarse_words.extend(path)
+    coarse_words.extend(param)
+
+    words = []
+    for w in coarse_words:
+        if w in ['-', '_', '.', ',']:
+            continue
+        if '-' in w or '_' in w or '.' in w or ',' in w:
+            words.extend(re.split(r'[\-,_\s\.]\s*', w))
+        else:
+            words.append(w)
+
+    words = ['digits' if re.match(reg_digits, w) else w.strip('\"') for w in words]
+    words = ['codes' if re.search(reg_codes, w) else w.strip('\"') for w in words]
+    words = filter(lambda x: x != '', words)
+    words = filter(lambda x: len(x) <= 20, words)
 
     return ' '.join(words).strip()
 

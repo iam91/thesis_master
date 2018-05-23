@@ -41,15 +41,14 @@ def tfidf(texts, param):
 
 if __name__ == '__main__':
 
-    SIMPLE_CNT = False  
-    TF_IDF = True 
+    SIMPLE_CNT = True  
+    TF_IDF = False
 
     df = pd.read_csv('../data_text.csv')
     print 'read'
 
     df_pos = df.loc[df['target'] == 1, :]
     df_neg = df.loc[df['target'] == 0, :]
-
 
     text_all = df['text'].values
     text_pos = df_pos['text'].values
@@ -64,6 +63,18 @@ if __name__ == '__main__':
         print '-' * 20
         print freq_neg[0:10]
         print '-' * 20
+
+        lens = [len(x[0]) for x in freq_pos]
+        lens.extend([len(x[0]) for x in freq_neg])
+        len_cnt = {}
+        for len in lens:
+            if len in len_cnt:
+                len_cnt[len] += 1
+            else:
+                len_cnt[len] = 1
+        len_cnt = sorted(len_cnt.items(), key=lambda x: x[0])
+        # print [x[1] for x in len_cnt]
+        print len_cnt
 
     if TF_IDF:
         # tf
