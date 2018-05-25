@@ -11,6 +11,7 @@ reg_extract_ipv6 = r'\[(.*)\]:\d+'
 reg_digits = r'^\d+$'
 reg_codes = r'\d{2,}'
 
+maxlen = 0
 
 def split_param(url):
     parsed = urlparse.urlparse(url)
@@ -54,6 +55,7 @@ def extract_field(field_str, field):
 
 
 def split(data):
+    global maxlen
     coarse_words = []
     method = data['method']
     param = split_param(data['url'])
@@ -77,8 +79,12 @@ def split(data):
     words = ['' if re.match(reg_digits, w) else w.strip('\"') for w in words]
     words = ['' if re.search(reg_codes, w) else w.strip('\"') for w in words]
     
-    words = filter(lambda x: x != '', words)
+    words = filter(lambda x: x != '' and x != '4e5f' and x != 'ae5a', words)
     words = filter(lambda x: len(x) <= 20, words)
+    words = [x.lower() for x in words]
+
+    if(len(words)) > maxlen:
+        maxlen = len(words)
 
     return ' '.join(words).strip()
 
@@ -93,3 +99,5 @@ if __name__ == '__main__':
     
     print df.head()
     df.to_csv('data_text.csv', index=False, header=True)
+
+    print 'maxlen: {:d}'.format(maxlen)

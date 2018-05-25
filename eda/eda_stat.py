@@ -56,6 +56,9 @@ if __name__ == '__main__':
     data_req = pd.read_csv('../data_req.txt', sep='\\')
     print 'read'
 
+    print data_req.loc[data_req['target'] == 1, 'target'].count(), data_req['target'].count()
+    print float(data_req.loc[data_req['target'] == 1, 'target'].count()) / data_req['target'].count()
+
     print data_req.groupby(['site']).size()
 
     data_req['url_len'] = data_req['url'].str.len()

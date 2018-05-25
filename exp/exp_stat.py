@@ -26,12 +26,12 @@ def preprocess(df):
 
 
 def svm_models(C):
-    models = [SVC(kernel='rbf', random_state=SEED, C=c) for c in C]
+    models = [SVC(kernel='rbf', random_state=SEED, C=c, class_weight={0:0.096, 1:0.904}) for c in C]
     return models
 
 
 def rf_models(N):
-    models = [RandomForestClassifier(n_estimators=n, random_state=SEED) for n in N]
+    models = [RandomForestClassifier(n_estimators=n, random_state=SEED, class_weight={0:0.096, 1:0.904}) for n in N]
     return models
 
 
@@ -48,9 +48,53 @@ if __name__ == '__main__':
     cv = CV(dfx, dfy, NSPLITS, SEED)
 
     # model
-    clfs = svm_models([5, 10, 20, 30, 40, 50, 60, 100])
+    params = range(10, 305, 5)
+    # clfs = svm_models(params)
+    # clfs = rf_models(params)
+    clfs = lr_models(params)
+    valid = {
+        'param': params,
+        'f1': [],
+        'recall': []
+    }
+    train = {
+        'param': params,
+        'f1': [],
+        'recall': []
+    }
     for clf in clfs:
         valid_scores, train_scores = cv.validate(clf)
-        print valid_scores
-        print '-' * 20
+        valid['f1'].append(valid_scores['f1'].mean())
+        valid['recall'].append(valid_scores['recall'].mean())
+        train['f1'].append(train_scores['f1'].mean())
+        train['recall'].append(train_scores['recall'].mean())
+        # valid['f1_std'].append(valid_scores['f1'].std())
+        # valid['recall_std'].append(valid_scores['recall'].std())
+        # train['f1_std'].append(train_scores['f1'].std())
+        # train['recall_std'].append(train_scores['recall'].std())
+
+    valid = pd.DataFrame(valid)
+    train = pd.DataFrame(train)
+
+    print valid.head()
+    print '-' * 20
+    print train.head()
+    print '-' * 20
+
+    valid_f1 = valid[['param', 'f1']]
+    valid_f1.rename(columns={'f1': 'value'}, inplace=True)
+    valid_f1['evaluation'] = 'valid f1'
+    valid_recall = valid[['param', 'recall']]
+    valid_recall.rename(columns={'recall': 'value'}, inplace=True)
+    valid_recall['evaluation'] = 'valid recall'
+    train_f1 = train[['param', 'f1']]
+    train_f1.rename(columns={'f1': 'value'}, inplace=True)
+    train_f1['evaluation'] = 'train f1'
+    train_recall = train[['param', 'recall']]
+    train_recall.rename(columns={'recall': 'value'}, inplace=True)
+    train_recall['evaluation'] = 'train recall'
+
+    df = pd.concat([valid_f1, valid_recall, train_f1, train_recall])
+    print df.head()
+    df.to_csv('lr_stat.csv', header=True, index=True)
 
