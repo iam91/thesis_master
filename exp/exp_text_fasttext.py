@@ -34,30 +34,14 @@ def vectorize(trainx, validx, trainy, validy):
     return vec_train, vec_valid, trainy, validy
 
 
-def svm_models(C):
-    models = [SVC(kernel='rbf', random_state=SEED, C=c, cache_size=1024) for c in C]
-    return models
-
-
-def rf_models(N):
-    models = [RandomForestClassifier(n_estimators=n, random_state=SEED, n_jobs=-1) for n in N]
-    return models
-
-
-def lr_models(C):
-    models = [LogisticRegression(C=c, n_jobs=-1) for c in C]
-    return models
-
-
 if __name__ == '__main__':
 
     df = pd.read_csv('../data_text.csv')
     exp = Exp(df, preprocess)
-    # params = range(10, 305, 5)
-    params = [275]
-    clfs = svm_models(params)
-    # clfs = rf_models(params)
-    # clfs = lr_models(params)
+    params = range(10, 305, 5)
+    
+    # models
+    clfs = []
 
-    exp.run(clfs, params, 'svm_text_base.csv', vectorize)
+    exp.run(clfs, params, 'svm_text.csv', vectorize)
     

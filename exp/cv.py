@@ -1,4 +1,3 @@
-from inspect import isfunction
 import numpy as np
 
 from sklearn.model_selection import StratifiedKFold
@@ -14,7 +13,7 @@ class CV(object):
         self.folds = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
         self.n_splits = n_splits
 
-    def validate(self, clf, data_preprocess=None, validate=False, fit_param=None):
+    def validate(self, clf, data_preprocess=None, validate=False, fit_param={}):
 
         valid_scores = {
             'precision': np.zeros(self.n_splits),
@@ -36,11 +35,14 @@ class CV(object):
             trainx, validx = self.datax.values[train_idx], self.datax.values[valid_idx]
             trainy, validy = self.datay.values[train_idx], self.datay.values[valid_idx]
 
-            if(isfunction(data_preprocess)):
+            if(hasattr(data_preprocess, '__call__')):
                 trainx, validx, trainy, validy = \
                     data_preprocess(trainx, validx, trainy, validy)
 
-            clf.fit(trainx, trainy, validation_data=(validx, validy), **fit_param)
+            if validate:
+                clf.fit(trainx, trainy, validation_data=(validx, validy), **fit_param)
+            else:
+                clf.fit(trainx, trainy, **fit_param)
             pred_valid = clf.predict(validx)
             pred_train = clf.predict(trainx)
 
