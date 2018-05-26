@@ -1,3 +1,4 @@
+import pickle
 import pandas as pd 
 import numpy as np
 
@@ -10,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
+from keras.callbacks import EarlyStopping
 from keras.layers.embeddings import Embedding
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -19,10 +21,11 @@ from cv import CV
 
 SEED = 2018
 NSPLITS = 3
+NWORDS = 200
+WV_DIM = 100
 MAX_DF = 0.8
-MIN_DF = 0.0004
+MIN_DF = 0.09 / 6
 MAX_SEQ_LEN = 227
-NWORDS = 5000
 
 def preprocess(df):
     df = df.copy()
@@ -34,6 +37,31 @@ def preprocess(df):
     return dfx, dfy
 
 
+def load_word2vec():
+    f = open('word2vec.pkl', 'rb')
+    word2idx = pickle.load(f)
+    weights = pickle.load(f)
+    return weights, word2idx
+
+
+def word2vec(texts):
+    pass 
+
+
+def word2vec_rnn(vocab_dim, wv_dim, weights):
+    embedding = Embedding(
+        input_dim=vocab_dim, 
+        output_dim=wv_dim, 
+        weights=[weights])
+    
+    model = Sequential()
+    model.add(embedding)
+    model.add(LSTM(32, dropout=0.2, recurrent_dropout=0.1))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return model
+
+
 def vectorize(trainx, validx, trainy, validy):
     v_train = TfidfVectorizer(max_df=MAX_DF, min_df=MIN_DF)
     vec_train = v_train.fit_transform(trainx).toarray()
@@ -43,7 +71,7 @@ def vectorize(trainx, validx, trainy, validy):
 
 
 def sequence(trainx, validx, trainy, validy):
-    token = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',lower=True,split=" ")
+    token = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',lower=True,split=" ", num_words=NWORDS)
     token.fit_on_texts(trainx)
     seq_train = pad_sequences(token.texts_to_sequences(trainx), maxlen=MAX_SEQ_LEN)
     seq_valid = pad_sequences(token.texts_to_sequences(validx), maxlen=MAX_SEQ_LEN)
@@ -53,14 +81,14 @@ def sequence(trainx, validx, trainy, validy):
 def rnn(nwords, input_length):
     model = Sequential()
     model.add(Embedding(nwords, 64, input_length=input_length))
-    model.add(LSTM(2))
+    model.add(LSTM(32, dropout=0.2, recurrent_dropout=0.1))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
 
 def svm_models(C):
-    models = [SVC(kernel='rbf', random_state=SEED, C=c, class_weight={0:0.096, 1:0.904}) for c in C]
+    models = [SVC(kernel='rbf', random_state=SEED, C=c, class_weight={0:0.096, 1:0.904}, cache_size=1024) for c in C]
     return models
 
 
@@ -74,23 +102,36 @@ def lr_models(C):
     return models
 
 
+def rnn_models():
+    model = KerasClassifier(build_fn=rnn, \
+        epochs=3, \
+        verbose=True, \
+        nwords=NWORDS, \
+        input_length=MAX_SEQ_LEN)
+    return [model] 
+
+
 if __name__ == '__main__':
 
     df = pd.read_csv('../data_text.csv')
     dfx, dfy = preprocess(df)
     
     cv = CV(dfx, dfy, NSPLITS, SEED)
-    nwords = 5000
-    # clf = KerasClassifier(build_fn=rnn, \
-    #     epochs=3, \
-    #     verbose=True, \
-    #     nwords=NWORDS, \
-    #     input_length=MAX_SEQ_LEN)
-    # valid_scores, train_scores = cv.validate(clf, sequence)
-    params = range(10, 305, 5)
-    clfs = svm_models(params)
+    # params = range(10, 305, 5)
+    # clfs = svm_models(params)
     # clfs = rf_models(params)
     # clfs = lr_models(params)
+    params = [0]
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
+    fit_param = {
+        'callbacks': [early_stopping],
+        'batch_size': 128,
+        'class_weight': {
+            1: 0.904,
+            0: 0.096
+        }
+    }
+    clfs = rnn_models()
     valid = {
         'param': params,
         'f1': [],
@@ -102,15 +143,11 @@ if __name__ == '__main__':
         'recall': []
     }
     for clf in clfs:
-        valid_scores, train_scores = cv.validate(clf, vectorize)
+        valid_scores, train_scores = cv.validate(clf, sequence, True, fit_param)
         valid['f1'].append(valid_scores['f1'].mean())
         valid['recall'].append(valid_scores['recall'].mean())
         train['f1'].append(train_scores['f1'].mean())
         train['recall'].append(train_scores['recall'].mean())
-        # valid['f1_std'].append(valid_scores['f1'].std())
-        # valid['recall_std'].append(valid_scores['recall'].std())
-        # train['f1_std'].append(train_scores['f1'].std())
-        # train['recall_std'].append(train_scores['recall'].std())
 
     valid = pd.DataFrame(valid)
     train = pd.DataFrame(train)
@@ -135,7 +172,7 @@ if __name__ == '__main__':
 
     df = pd.concat([valid_f1, valid_recall, train_f1, train_recall])
     print df.head()
-    df.to_csv('svm_text.csv', header=True, index=True)
+    df.to_csv('rnn_text.csv', header=True, index=True)
     print train_scores
     print '-' * 20
     print valid_scores

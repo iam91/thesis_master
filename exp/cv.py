@@ -14,7 +14,7 @@ class CV(object):
         self.folds = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
         self.n_splits = n_splits
 
-    def validate(self, clf, data_preprocess=None):
+    def validate(self, clf, data_preprocess=None, validate=False, fit_param=None):
 
         valid_scores = {
             'precision': np.zeros(self.n_splits),
@@ -40,7 +40,7 @@ class CV(object):
                 trainx, validx, trainy, validy = \
                     data_preprocess(trainx, validx, trainy, validy)
 
-            clf.fit(trainx, trainy)
+            clf.fit(trainx, trainy, validation_data=(validx, validy), **fit_param)
             pred_valid = clf.predict(validx)
             pred_train = clf.predict(trainx)
 

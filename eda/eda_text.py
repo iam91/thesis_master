@@ -68,10 +68,18 @@ def tfidf(texts, param):
     plt.show()
 
 
+def tfidf_feature_dim(texts, param):
+    tv = TfidfVectorizer(**param)
+    tf = tv.fit_transform(texts)
+    tf = np.asarray(tf.sum(axis=0)).reshape(-1)
+    return tf
+
+
 if __name__ == '__main__':
 
-    TERM_FREQ = False 
-    DOC_FREQ = True
+    STOP_WORDS = True
+    TERM_FREQ = False
+    DOC_FREQ = False
     TF_IDF = False 
 
     df = pd.read_csv('../data_text.csv')
@@ -85,6 +93,17 @@ if __name__ == '__main__':
     text_neg = df_neg['text'].values
     print df['text'].head()
 
+    if STOP_WORDS:
+        before = tfidf_feature_dim(text_all, {
+            'max_df': 0.9
+        })
+        after = tfidf_feature_dim(text_all, {
+            'min_df': 0.09 / 6
+        })
+        print len(before)
+        print len(after)
+
+
     if TERM_FREQ:
         freq_pos = termfreq(text_pos)
         freq_neg = termfreq(text_neg)
@@ -92,6 +111,9 @@ if __name__ == '__main__':
         print freq_pos[0:10]
         print '-' * 20
         print freq_neg[0:10]
+        print '-' * 20
+        print len(freq_pos)
+        print len(freq_neg)
         print '-' * 20
         
         # lens = [len(x[0]) for x in freq_pos]
@@ -112,7 +134,7 @@ if __name__ == '__main__':
         print df_neg[-21:-1]
         print '-' * 20
 
-        d = pd.DataFrame({'df': [x[1] for x in df_all]})
+        d = pd.DataFrame({'df': [x[1] for x in df_pos]})
         d['seq'] = d.index
         d = d.loc[1:, :]
         print d.head()
