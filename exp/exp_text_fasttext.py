@@ -1,47 +1,51 @@
-import pickle
 import pandas as pd 
 import numpy as np
 
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 
-from exp import Exp
-
-SEED = 2018
-NSPLITS = 3
-MAX_DF = 0.8
-MIN_DF = 0.09 / 6
-MAX_SEQ_LEN = 227
-
-def preprocess(df):
-    df = df.copy()
-    df.sample(frac=1, random_state=SEED).reset_index(inplace=True)
-
-    dfy = df['target']
-    dfx = df['text']
-    del df 
-    return dfx, dfy
+NSPLITS = 1
 
 
-def vectorize(trainx, validx, trainy, validy):
-    v_train = TfidfVectorizer(max_df=MAX_DF, min_df=MIN_DF)
-    vec_train = v_train.fit_transform(trainx).toarray()
-    v_valid = TfidfVectorizer(vocabulary=v_train.vocabulary_)
-    vec_valid = v_valid.fit_transform(validx).toarray()
-    return vec_train, vec_valid, trainy, validy
+def get_label(text):
+    word = text.split()
+    if word[0] == '__label__0':
+        return 0
+    elif word[0] == '__label__1':
+        return 1
 
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../data_text.csv')
-    exp = Exp(df, preprocess)
-    params = range(10, 305, 5)
-    
-    # models
-    clfs = []
+    valid_scores = {
+        'precision': np.zeros(NSPLITS),
+        'accuracy': np.zeros(NSPLITS),
+        'recall': np.zeros(NSPLITS),
+        'f1': np.zeros(NSPLITS)
+    }
+    for i in range(NSPLITS):
+        pred = pd.read_csv('{:d}_pred.csv'.format(i), header=None)
+        valid = pd.read_csv('{:d}_valid.txt'.format(i), header=None)
 
-    exp.run(clfs, params, 'svm_text.csv', vectorize)
-    
+        predy = pred[0].map(get_label)
+        validy = valid[0].map(get_label)
+
+        valid_scores['precision'][i] = precision_score(validy, predy)
+        valid_scores['accuracy'][i] = accuracy_score(validy, predy)
+        valid_scores['recall'][i] = recall_score(validy, predy)
+        valid_scores['f1'][i] = f1_score(validy, predy)
+
+    valid_f1 = pd.DataFrame({'f1': [valid_scores['f1'].mean()]})
+    valid_f1.rename(columns={'f1': 'value'}, inplace=True)
+    valid_f1['evaluation'] = 'valid f1'
+    valid_recall = pd.DataFrame({'recall': [valid_scores['recall'].mean()]})
+    valid_recall.rename(columns={'recall': 'value'}, inplace=True)
+    valid_recall['evaluation'] = 'valid recall'
+
+    df = pd.concat([valid_f1, valid_recall])
+    print df.head()
+    save_file = 'fasttext.csv'
+    if save_file:
+        df.to_csv(save_file, header=True, index=True)

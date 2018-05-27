@@ -6,8 +6,9 @@ from functools import partial
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
-from keras.callbacks import EarlyStopping
+from keras.layers import GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
+from keras.callbacks import EarlyStopping
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.wrappers.scikit_learn import KerasClassifier
@@ -16,7 +17,7 @@ from exp import Exp
 
 SEED = 2018
 NSPLITS = 3
-NWORDS = 200
+NWORDS = 300
 WV_DIM = 64
 MAX_DF = 0.8
 MIN_DF = 0.09 / 6
@@ -66,32 +67,6 @@ def word2vec_sequence(trainx, validx, trainy, validy, word2idx):
     return trainx, validx, trainy, validy
 
 
-def sequence(trainx, validx, trainy, validy):
-    token = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',lower=True,split=" ", num_words=NWORDS)
-    token.fit_on_texts(trainx)
-    seq_train = pad_sequences(token.texts_to_sequences(trainx), maxlen=MAX_SEQ_LEN)
-    seq_valid = pad_sequences(token.texts_to_sequences(validx), maxlen=MAX_SEQ_LEN)
-    return seq_train, seq_valid, trainy, validy
-    
-
-def rnn(nwords, input_length):
-    model = Sequential()
-    model.add(Embedding(nwords, 300, input_length=input_length))
-    model.add(LSTM(256, dropout=0.2, recurrent_dropout=0.1))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    return model
-
-
-def rnn_models():
-    model = KerasClassifier(build_fn=rnn, 
-        epochs=1, 
-        verbose=True, 
-        nwords=NWORDS, 
-        input_length=MAX_SEQ_LEN)
-    return [model] 
-
-
 def word2vec_rnn_models(vocab_dim, wv_dim, weights):
     model = KerasClassifier( \
         build_fn=word2vec_rnn, 
@@ -103,6 +78,31 @@ def word2vec_rnn_models(vocab_dim, wv_dim, weights):
     return [model] 
 
 
+def sequence(trainx, validx, trainy, validy):
+    token = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',lower=True,split=" ", num_words=NWORDS)
+    token.fit_on_texts(trainx)
+    seq_train = pad_sequences(token.texts_to_sequences(trainx), maxlen=MAX_SEQ_LEN)
+    seq_valid = pad_sequences(token.texts_to_sequences(validx), maxlen=MAX_SEQ_LEN)
+    return seq_train, seq_valid, trainy, validy
+    
+
+def rnn(nwords, input_length):
+    model = Sequential()
+    model.add(Embedding(nwords, 256, input_length=input_length))
+    model.add(LSTM(128))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return model
+
+
+def rnn_models():
+    model = KerasClassifier(build_fn=rnn, 
+        epochs=3, 
+        verbose=True, 
+        nwords=NWORDS, 
+        input_length=MAX_SEQ_LEN)
+    return [model] 
+
 
 if __name__ == '__main__':
 
@@ -112,17 +112,16 @@ if __name__ == '__main__':
     early_stopping = EarlyStopping(monitor='val_loss', patience=20)
     fit_param = {
         'callbacks': [early_stopping],
-        'batch_size': 256,
+        'batch_size': 128,
         'class_weight': {
             1: 0.904,
             0: 0.096
         }
     }
-    # clfs = rnn_models()
+
     # weights, word2idx = load_word2vec()
     # clfs = word2vec_rnn_models(len(word2idx) + 1, WV_DIM, weights)
+    # exp.run(clfs, params, 'rnn_text.csv', partial(word2vec_sequence, word2idx=word2idx), True, fit_param)
 
     clfs = rnn_models()
-
-    # exp.run(clfs, params, 'rnn_text.csv', partial(word2vec_sequence, word2idx=word2idx), True, fit_param)
     exp.run(clfs, params, 'rnn_text.csv', sequence, True, fit_param)
