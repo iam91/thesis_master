@@ -1,3 +1,4 @@
+import sys
 import pandas as pd 
 import numpy as np
 
@@ -8,7 +9,6 @@ from sklearn.metrics import f1_score
 
 NSPLITS = 1
 
-
 def get_label(text):
     word = text.split()
     if word[0] == '__label__0':
@@ -18,7 +18,7 @@ def get_label(text):
 
 
 if __name__ == '__main__':
-
+    PARTS = sys.argv[1:]
     valid_scores = {
         'precision': np.zeros(NSPLITS),
         'accuracy': np.zeros(NSPLITS),
@@ -26,8 +26,8 @@ if __name__ == '__main__':
         'f1': np.zeros(NSPLITS)
     }
     for i in range(NSPLITS):
-        pred = pd.read_csv('{:d}_pred.csv'.format(i), header=None)
-        valid = pd.read_csv('{:d}_valid.txt'.format(i), header=None)
+        pred = pd.read_csv('{:d}_pred_{:s}.txt'.format(i, '_'.join(PARTS)), header=None)
+        valid = pd.read_csv('{:d}_valid_{:s}.txt'.format(i, '_'.join(PARTS)), header=None)
 
         predy = pred[0].map(get_label)
         validy = valid[0].map(get_label)

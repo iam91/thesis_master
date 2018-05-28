@@ -19,10 +19,11 @@ from exp import Exp
 SEED = 2018
 NSPLITS = 3
 NWORDS = 300
-WV_DIM = 64
+WV_DIM = 256
 MAX_DF = 0.8
 MIN_DF = 0.09 / 6
 MAX_SEQ_LEN = 227
+
 
 def preprocess(df):
     df = df.copy()
@@ -56,7 +57,7 @@ def word2vec_rnn(vocab_dim, wv_dim, weights):
     
     model = Sequential()
     model.add(embedding)
-    model.add(LSTM(32, dropout=0.2, recurrent_dropout=0.1))
+    model.add(LSTM(128))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
@@ -74,7 +75,7 @@ def word2vec_rnn_models(vocab_dim, wv_dim, weights):
         vocab_dim=vocab_dim,
         wv_dim=wv_dim,
         weights=weights,
-        epochs=3, 
+        epochs=5, 
         verbose=True,)
     return [model] 
 
@@ -108,7 +109,7 @@ def rnn_models():
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../exp_data/data_text.csv')
+    df = pd.read_csv('../exp_data/data_text_meth_pshuffle.csv')
     exp = Exp(df, preprocess)
     params = [0]
     early_stopping = EarlyStopping(monitor='val_loss', patience=20)
@@ -123,7 +124,7 @@ if __name__ == '__main__':
 
     # weights, word2idx = load_word2vec()
     # clfs = word2vec_rnn_models(len(word2idx) + 1, WV_DIM, weights)
-    # exp.run(clfs, params, 'rnn_text.csv', partial(word2vec_sequence, word2idx=word2idx), True, fit_param)
+    # exp.run(clfs, params, 'rnn_text_word2vec.csv', partial(word2vec_sequence, word2idx=word2idx), True, fit_param)
 
     clfs = rnn_models()
     exp.run(clfs, params, 'rnn_text.csv', sequence, True, fit_param)

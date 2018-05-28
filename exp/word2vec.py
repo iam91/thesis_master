@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np 
 from gensim.models import Word2Vec
 
-WV_DIM = 64
-TF_MIN = 10
+WV_DIM = 256
+TF_MIN = 5
 
 if __name__ == '__main__':
 

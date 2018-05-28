@@ -1,3 +1,4 @@
+import sys 
 import pandas as pd 
 
 def format(data):
@@ -5,8 +6,8 @@ def format(data):
     return val 
 
 if __name__ == '__main__':
-    
-    df = pd.read_csv('../exp_data/data_text.csv')
+    PARTS = sys.argv[1:]    
+    df = pd.read_csv('../exp_data/data_text_{:s}.csv'.format('_'.join(PARTS)))
 
     formatted = df.apply(format, axis=1)
     df = df['text']
@@ -14,5 +15,5 @@ if __name__ == '__main__':
     print formatted.head()
     print '-' * 20
     print df.head()
-    formatted.to_csv('../exp_data/data_text.txt', index=False, header=False)
-    df.to_csv('../exp_data/data_text_test.txt', index=False, header=False)
+    formatted.to_csv('../exp_data/data_text_{:s}.txt'.format('_'.join(PARTS)), index=False, header=False)
+    df.to_csv('../exp_data/data_text_test_{:s}.txt'.format('_'.join(PARTS)), index=False, header=False)

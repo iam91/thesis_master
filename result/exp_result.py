@@ -7,7 +7,7 @@ np.random.seed(sum(map(ord, "aesthetics")))
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('rnn_text.csv')
+    df = pd.read_csv('svm_text.csv')
     print 'read'
     g = sns.factorplot(data=df, x='param', y='value', hue='evaluation', legend_out=True)
     print df['param'].max()
