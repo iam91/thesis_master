@@ -8,7 +8,7 @@ TF_MIN = 10
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../data_text.csv')
+    df = pd.read_csv('../exp_data/data_text.csv')
     print 'read'
 
     sentences = [x.split() for x in df['text'].values]

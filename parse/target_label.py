@@ -4,7 +4,7 @@ from urllib import unquote
 from os import listdir
 from os.path import isfile, join
 
-data_dir = 'data'
+data_dir = '../data'
 data_files = [f for f in listdir(data_dir) if isfile(join(data_dir, f))]
 
 reg_site = r'(\d*[a-z]+)\d+\.txt'
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     out_res = []
 
     # load target ip addresses
-    ip_target_file = open('target_ip.txt', 'r')
+    ip_target_file = open('../exp_data/target_ip.txt', 'r')
     for ip in ip_target_file.readlines():
         ip_target.add(ip.strip('\n'))
 
@@ -111,10 +111,10 @@ if __name__ == '__main__':
                 line = sep.join([label, site, line])
                 out_res.append(line)
     
-    fout_req = open('data_req.txt', 'w')
+    fout_req = open('../exp_data/data_req.txt', 'w')
     fout_req.write(header_req + '\n' + '\n'.join(out_req))
     fout_req.close()
 
-    fout_res = open('data_res.txt', 'w')
+    fout_res = open('../exp_data/data_res.txt', 'w')
     fout_res.write(header_res + '\n' + '\n'.join(out_res))
     fout_res.close()

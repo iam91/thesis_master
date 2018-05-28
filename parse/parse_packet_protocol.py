@@ -5,8 +5,8 @@ from urllib import urlencode
 from os import listdir
 from os.path import isfile, join
 
-textDir = 'text'
-formattedDir = 'data'
+textDir = '../text'
+formattedDir = '../data'
 textFiles = [f for f in listdir(textDir) if isfile(join(textDir, f))]
 
 sep = '\\'

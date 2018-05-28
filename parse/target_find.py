@@ -4,7 +4,7 @@ import re
 from os import listdir
 from os.path import isfile, join
 
-data_dir = 'data'
+data_dir = '../data'
 data_files = [f for f in listdir(data_dir) if isfile(join(data_dir, f))]
 
 PACKET_TYPE = 0
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     print('total: {:d}'.format(len(ip_total)))
     print('target: {:d}'.format(len(ip_target)))
 
-    fout = open('target_ip.txt', 'w')
+    fout = open('../exp_data/target_ip.txt', 'w')
     fout.write('\n'.join(ip_target))
     fout.close()
 

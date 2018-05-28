@@ -51,13 +51,13 @@ def lr_models(C):
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../data_text.csv')
+    df = pd.read_csv('../exp_data/data_text.csv')
     exp = Exp(df, preprocess)
     # params = range(10, 305, 5)
-    params = [275]
+    params = [10]
     clfs = svm_models(params)
     # clfs = rf_models(params)
-    # clfs = lr_models(params)
+    clfs = lr_models(params)
 
-    exp.run(clfs, params, 'svm_text_base.csv', vectorize)
+    exp.run(clfs, params, 'lr_text_base.csv', vectorize)
     

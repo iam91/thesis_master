@@ -89,15 +89,14 @@ def split(data):
     return ' '.join(words).strip()
 
 
-
 if __name__ == '__main__':
-    df = pd.read_csv('data_req.txt', sep='\\')
+    df = pd.read_csv('../exp_data/data_req.txt', sep='\\')
     print 'read'
     
     df['text'] = df.apply(split, axis=1)
     df = df[['target', 'text']]
     
     print df.head()
-    df.to_csv('data_text.csv', index=False, header=True)
+    df.to_csv('../exp_data/data_text.csv', index=False, header=True)
 
     print 'maxlen: {:d}'.format(maxlen)

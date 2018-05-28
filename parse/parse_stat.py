@@ -37,7 +37,7 @@ def url_query_str(url):
 
 
 if __name__ == '__main__':
-    data_req = pd.read_csv('data_req.txt', sep='\\')
+    data_req = pd.read_csv('../exp_data/data_req.txt', sep='\\')
     print 'read'
 
     data_req['url_len'] = data_req['url'].str.len()
@@ -49,4 +49,4 @@ if __name__ == '__main__':
     cols = 'target site host_is_ip url_len url_path_len url_path_str url_query_cnt url_query_str'.split()
     df = data_req[cols]
 
-    df.to_csv('data_stat.csv', header=True, index=False)
+    df.to_csv('../exp_data/data_stat.csv', header=True, index=False)

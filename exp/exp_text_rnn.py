@@ -5,6 +5,7 @@ from functools import partial
 
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.layers import GRU
 from keras.layers import LSTM
 from keras.layers import GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
@@ -89,7 +90,8 @@ def sequence(trainx, validx, trainy, validy):
 def rnn(nwords, input_length):
     model = Sequential()
     model.add(Embedding(nwords, 256, input_length=input_length))
-    model.add(LSTM(128))
+    # model.add(LSTM(128))
+    model.add(GRU(128))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
@@ -97,7 +99,7 @@ def rnn(nwords, input_length):
 
 def rnn_models():
     model = KerasClassifier(build_fn=rnn, 
-        epochs=3, 
+        epochs=5, 
         verbose=True, 
         nwords=NWORDS, 
         input_length=MAX_SEQ_LEN)
@@ -106,7 +108,7 @@ def rnn_models():
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../data_text.csv')
+    df = pd.read_csv('../exp_data/data_text.csv')
     exp = Exp(df, preprocess)
     params = [0]
     early_stopping = EarlyStopping(monitor='val_loss', patience=20)

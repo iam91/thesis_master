@@ -6,7 +6,7 @@ def format(data):
 
 if __name__ == '__main__':
     
-    df = pd.read_csv('data_text.csv')
+    df = pd.read_csv('../exp_data/data_text.csv')
 
     formatted = df.apply(format, axis=1)
     df = df['text']
@@ -14,5 +14,5 @@ if __name__ == '__main__':
     print formatted.head()
     print '-' * 20
     print df.head()
-    formatted.to_csv('data_text.txt', index=False, header=False)
-    df.to_csv('data_text_test.txt', index=False, header=False)
+    formatted.to_csv('../exp_data/data_text.txt', index=False, header=False)
+    df.to_csv('../exp_data/data_text_test.txt', index=False, header=False)

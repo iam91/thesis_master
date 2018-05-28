@@ -39,14 +39,14 @@ def lr_models(C):
 
 if __name__ == '__main__':
 
-    df = pd.read_csv('../data_stat.csv') 
+    df = pd.read_csv('../exp_data/data_stat.csv') 
 
     exp = Exp(df, preprocess)
 
     # model
     # params = range(10, 305, 5)
     params = [300]
-    clfs = svm_models(params)
-    # clfs = rf_models(params)
+    # clfs = svm_models(params)
+    clfs = rf_models(params)
     # clfs = lr_models(params)
-    exp.run(clfs, params, 'svm_stat_base.csv')
+    exp.run(clfs, params, 'rf_stat_base.csv')
