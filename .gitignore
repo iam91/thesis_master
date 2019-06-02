@@ -1,5 +1,6 @@
-figure/
+grad/figure/*
 *.pptx
 *.xlsx
 *.pyc
 *.png
+*.DS_Store
